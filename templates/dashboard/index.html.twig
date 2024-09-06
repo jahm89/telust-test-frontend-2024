@@ -2,6 +2,24 @@
 
 {% block title %}Dashboard{% endblock %}
 
+{% block stylesheets %}
+        <style>
+            pre {
+                background-color: #f7f7f7;
+                border: 1px solid #ddd;
+                padding: 10px;
+                border-radius: 4px;
+                overflow-x: auto;
+                white-space: pre-wrap; 
+                max-height: 24em;
+            }
+                #chart-container {
+                width: 100%;
+                height: 400px; /* Adjust height as needed */
+            }
+        </style>
+{% endblock %}
+
 {% block body %}
 <div class="container mt-5">
 <div class="row justify-content-center">
@@ -14,7 +32,7 @@
                         <div class="mb-3">
                             <label for="exampleFormControlInput1" class="form-label">Select a group of data</label>
                             <select name="group" id="group" class="form-select">
-                                <option value="">All</option>
+                                <option value="">Select a group</option>
                                 {% for group in groups %}
                                     <option value="{{group.id}}">{{group.id}} - {{group.executionDate | date}}</option>
                                 {% endfor %}
@@ -22,28 +40,77 @@
                         </div>
                     </div>
                     <div class="col-2">
-                        <button class="btn btn-primary mt-3">Search</button>
+                        <button class="btn btn-primary mt-3" id="seach">Search</button>
                     </div>
                 </div>
 
                 <div class="row mt-4">
-                    <table class="table table-responsive table-striped">
-                        <thead>
-                            <tr>
-                                <td>ID</td>
-                                <td>Column 1</td>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>2</td>
-                                <td>dasda</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <pre id="json-data"></pre>
+                </div>
+            </div>
+
+            <div class="row mt-2">
+                <div class="container mt-2">
+                    <div id="chart-container"></div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+{% block javascripts %}
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script>
+    (function() {
+
+        const route = "{{ path('app_get_group_data')}}";
+
+        $('#seach').click(() => {
+            const group = $('#group').val();
+
+            if(group === '' || group === undefined) {
+                alert('Please select a group');
+                return;
+            }
+
+            $.ajax({
+                url: route,
+                method: 'POST',
+                data: {groupId: group}
+            }).done(function(data){
+                $('#json-data').html(JSON.stringify(data.data, null, 2));
+                initializePieChart(data.osFormattedData);
+            });
+        });
+
+
+
+    })();
+
+    function initializePieChart(chartData){
+        Highcharts.chart('chart-container', {
+            chart: {
+                type: 'pie'
+            },
+            title: {
+                text: 'Operating System'
+            },
+            series: [{
+                name: 'Usage',
+                data: chartData,
+                innerSize: '50%', // Optional: For a donut chart
+            }],
+            plotOptions: {
+                pie: {
+                    dataLabels: {
+                        enabled: true,
+                        format: '{point.name}: {point.y}'
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}
+
 {% endblock %}
