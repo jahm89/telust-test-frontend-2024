@@ -45,13 +45,17 @@
                 </div>
 
                 <div class="row mt-4">
-                    <pre id="json-data"></pre>
-                </div>
-            </div>
-
-            <div class="row mt-2">
-                <div class="container mt-2">
-                    <div id="chart-container"></div>
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div class="col-6">
+                        <pre id="json-data" class="content"></pre>
+                    </div>
+                    <div class="col-6">
+                        <div class="container mt-2">
+                            <div id="chart-container" class="content"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -62,6 +66,8 @@
 <script src="https://code.highcharts.com/highcharts.js"></script>
 <script>
     (function() {
+        $('.content').hide();
+        $('.spinner-border').hide();
 
         const route = "{{ path('app_get_group_data')}}";
 
@@ -76,10 +82,16 @@
             $.ajax({
                 url: route,
                 method: 'POST',
-                data: {groupId: group}
+                data: {groupId: group},
+                beforeSend: function( xhr ) {
+                    $('.content').hide();
+                    $('.spinner-border').show();
+                }
             }).done(function(data){
                 $('#json-data').html(JSON.stringify(data.data, null, 2));
                 initializePieChart(data.osFormattedData);
+                $('.content').show();
+                $('.spinner-border').hide();
             });
         });
 
